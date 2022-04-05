@@ -1,0 +1,92 @@
+	.globl   binomial_asm
+    .p2align 2
+	.type    binomial_asm,%function
+
+binomial_asm:
+
+// You will need to call fact_asm from within this code using the bl instruction
+// This is a non-leaf procedure so you need to save X30 on the stack
+// and restore it from the stack before returning
+		sub sp, sp, #16
+		str x30, [sp, #8]
+
+
+		CMP X0, #0
+		B.LT Label1
+		B Label2
+
+		Label2:
+		CMP x1, #0
+		B.LT Label1
+		B Label3
+
+		Label3:
+		CMP x0, #10
+		B.GT Label1
+		B Label4
+
+		Label4:
+		CMP x0, x1
+		B.LT Label1
+		B Label5
+
+		Label5:
+		CMP x0, #0
+		B.EQ Label1a
+		B Label6
+
+		Label6:
+		mov x11, x0 //moves value of n to x11
+		mov x12, x1 //moves value of r to x12
+		bl fact_asm
+
+		mov x13, x0 //x13 is numerator
+		sub x0, x11, x12
+		bl fact_asm
+		mov x14, x0 //x14 is denom1
+		mov x0, x12
+		bl fact_asm
+		mov x15, x0 //x15 is denom2
+
+		MUL x9, x14, x15
+		SDIV x0, x13, x9
+		B End
+
+		Label1:
+		mov x0, #-1
+		B End
+
+		Label1a:
+		mov x0, #1
+		B End
+
+		End:
+		ldr x30, [sp, #8]
+		add sp, sp, #16
+		br x30
+
+// Note that fact_asm does not need to have global scope because it is not used outside this file.
+
+fact_asm:
+
+
+		L4:
+		mov x9, x0 //move value for n outside of x0; x9 is n
+		mov x0, #1 //value for fact      ; x0 is fact
+		mov x10, #1 //value for i        ;x10 is i
+		CMP x10, x9
+		B.LE L5
+
+
+		L5:
+		MUL x0, x0, x10 //fact product in x13
+		ADD x10, x10, #1
+		CMP x10, x9
+		B.LE L5
+		B L7
+
+		L7:
+		B L6
+
+		L6:
+		br		x30
